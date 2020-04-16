@@ -1,5 +1,5 @@
 /**
- *  HA Heater (v.0.0.5)
+ *  HA Heater (v.0.0.6)
  *
  *  Authors
  *   - fison67@nate.com
@@ -28,6 +28,7 @@ metadata {
 		capability "Sensor"
 		attribute "lastCheckin", "Date"
 		command "setStatus"
+		command "setStatusMap"        
 	}
 	
 	simulator {

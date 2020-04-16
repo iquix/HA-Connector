@@ -30,6 +30,7 @@ metadata {
         attribute "entity_id", "String"
         attribute "ha_url", "String"
 		command "setStatus"
+        command "setStatusMap"
 	}
     
 	simulator {
