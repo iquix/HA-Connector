@@ -1,5 +1,5 @@
 /**
- *  HA Heater (v.0.0.6)
+ *  HA Heater (v.0.0.7)
  *
  *  Authors
  *   - fison67@nate.com
@@ -28,7 +28,7 @@ metadata {
 		capability "Sensor"
 		attribute "lastCheckin", "Date"
 		command "setStatus"
-		command "setStatusMap"        
+		command "setStatusMap"
 	}
 	
 	simulator {
@@ -77,9 +77,9 @@ def setStatus(String value){
 }
 
 def setStatusMap(Map obj) {
-    def stat = obj["state"]
-    def attr = obj["attr"]
-    log.debug "setStatusMap[${state.entity_id}] >> ${stat}, ${attr}"
+	def stat = obj["state"]
+	def attr = obj["attr"]
+	log.debug "setStatusMap[${state.entity_id}] >> ${stat}, ${attr}"
 	setEnv(stat, attr.temperature, attr.current_temperature)
 }
 
@@ -115,12 +115,12 @@ def setEnv(String statusValue, setpointValue, currentTemperatureValue){
 		_value = "heat"
 		log.debug "Status[${state.entity_id}] HA thermostat mode ${statusValue} is not supported in ST. Mode value is replaced into ${_value} for compatibility"
 	}
-	//sendEvent(name: "switch", value: (_value=="off")? "off" : "on")
-	sendEvent(name: "thermostatMode", value: _value)
-	sendEvent(name: "heatingSetpoint", value: setpointValue as int, unit: "C")
+	//sendEvent(name: "switch", value: (_value=="off")? "off" : "on", displayed: true)
+	sendEvent(name: "thermostatMode", value: _value, displayed: true)
+	sendEvent(name: "heatingSetpoint", value: setpointValue as int, unit: "C", displayed: true)
 	sendEvent(name: "coolingSetpoint", value: setpointValue as int, unit: "C")
-	sendEvent(name: "temperature", value: currentTemperatureValue as int, unit: "C")
-	sendEvent(name: "thermostatOperatingState", value: ((_value=="heat")&&(currentTemperatureValue<setpointValue))? "heating" : "idle")
+	sendEvent(name: "temperature", value: currentTemperatureValue as int, unit: "C", displayed: true)
+	sendEvent(name: "thermostatOperatingState", value: ((_value=="heat")&&(currentTemperatureValue<setpointValue))? "heating" : "idle", displayed: true)
 	sendEvent(name: "lastCheckin", value: new Date().format("yyyy-MM-dd HH:mm:ss", location.timeZone), displayed: false)
 }
 
@@ -189,7 +189,7 @@ def callbackRefresh(physicalgraph.device.HubResponse hubResponse){
 	try {
 		msg = parseLanMessage(hubResponse.description)
 		def jsonObj = new JsonSlurper().parseText(msg.body)
-        log.debug "Refresh[${state.entity_id}] >> mode: ${jsonObj.state}, heatingSetpoint: ${jsonObj.attributes.temperature}, currentTemp: ${jsonObj.attributes.current_temperature}"
+		log.debug "Refresh[${state.entity_id}] >> mode: ${jsonObj.state}, heatingSetpoint: ${jsonObj.attributes.temperature}, currentTemp: ${jsonObj.attributes.current_temperature}"
 		setEnv(jsonObj.state, jsonObj.attributes.temperature, jsonObj.attributes.current_temperature)
 	} catch (e) {
 		log.error "Exception caught while parsing data: "+e;
