@@ -125,11 +125,13 @@ def setEnv(String statusValue, setpointValue, currentTemperatureValue){
 }
 
 def setHeatingSetpoint(temperature){
-	processCommand("set_temperature", [ "entity_id": state.entity_id, "temperature": temperature as int ])
+	def settemp = temperature as int 
+	settemp += (settemp != temperature && temperature > device.currentValue("heatingSetpoint")) ? 1 : 0
+	processCommand("set_temperature", [ "entity_id": state.entity_id, "temperature": settemp ])
 }
 
 def setCoolingSetpoint(temperature){
-	processCommand("set_temperature", [ "entity_id": state.entity_id, "temperature": temperature as int ])
+	setHeatingSetpoint(temperature)
 }
 
 def setThermostatMode(mode){
