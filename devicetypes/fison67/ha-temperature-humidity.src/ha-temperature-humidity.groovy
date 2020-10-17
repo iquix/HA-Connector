@@ -141,7 +141,7 @@ def setEnv(humValue, tempValue, batValue){
 	}
 	log.debug "Status[${state.entity_id}] >> humidity: ${humValue}, temperature: ${tempValue}, battery: ${batValue}"
 
-	sendEvent(name: "humidity", value: humValue, displayed: true)
+	sendEvent(name: "humidity", value: humValue, unit: "%", displayed: true)
 	sendEvent(name: "temperature", value: tempValue, unit: "C", displayed: true)
 	sendEvent(name: "battery", value: batValue, displayed: true)
 	sendEvent(name: "lastCheckin", value: new Date().format("yyyy-MM-dd HH:mm:ss", location.timeZone), displayed: false)
