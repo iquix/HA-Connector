@@ -1,5 +1,5 @@
 /**
- *  HA Fan (v.0.0.2-iquix patch for xiaomi_miio_fan custom_component)
+ *  HA Fan (v.0.0.3-iquix patch for xiaomi_miio_fan custom_component)
  *
  *  Authors
  *   - fison67@nate.com / iquix@naver.com
@@ -26,6 +26,7 @@ metadata {
         capability "Switch Level"
 		capability "Refresh"
         capability "Actuator"
+        capability "Fan Oscillation Mode"
 
 		command "low"
 		command "medium"
@@ -83,21 +84,21 @@ def setHASetting(url, password, deviceId){
 
 def setStatusMap(map){
 	log.debug map
-    setEnv(map.state, map?.attr["speed"])
+    setEnv(map.state, map?.attr["speed"], map?.attr["oscillating"])
 }
 
-def setEnv(stat, speed) {
-	log.debug "setEnv(${stat}, ${speed})"
+def setEnv(stat, speed, oscillating) {
+	log.debug "setEnv(${stat}, ${speed}, ${oscillating})"
 	def level
  	setStatus(stat)
-    if(speed != null){
-    	if(speed == "Level 1") {
+    if (speed != null){
+    	if (speed == "Level 1") {
         	level = 1
-        } else if(speed == "Level 2"){
+        } else if (speed == "Level 2"){
         	level = 35
-        }else if(speed == "Level 3"){
+        }else if (speed == "Level 3"){
         	level = 70
-        }else if(speed == "Level 4"){
+        }else if (speed == "Level 4"){
         	level = 100
 		}else{
         	level = 0
@@ -105,6 +106,7 @@ def setEnv(stat, speed) {
     	sendEvent(name: "level", value:level)
         sendEvent(name: "fanSpeed", value: getFanSpeedValue(level))
     }
+	sendEvent(name: "fanOscillationMode", value: ("${oscillating}" == "true") ? "horizontal" : "fixed", displayed: true)
 }
 
 def setStatus(String value){
@@ -211,6 +213,15 @@ def off(){
 	processCommand("turn_off", [ "entity_id": state.entity_id ])
 }
 
+def setFanOscillationMode(mode) {
+	log.debug "setFanOscillationMode(${mode})"
+	if (mode != "horizontal" && mode != "fixed") {
+    	sendEvent(name: "fanOscillationMode", value: device.currentValue("fanOscillationMode"), displayed: false)
+    }
+	def ha_mode = (mode == "horizontal") ? "true" : "false"
+    processCommand("oscillate", [ "entity_id": state.entity_id, "oscillating": ha_mode ])    
+}
+
 def processCommand(command, body){
     def temp = state.entity_id.split("\\.")
     def options = [
@@ -231,13 +242,15 @@ def callback(physicalgraph.device.HubResponse hubResponse){
     try {
         msg = parseLanMessage(hubResponse.description)
 		def jsonObj = new JsonSlurper().parseText(msg.body)
-        setEnv(jsonObj.state, jsonObj?.attributes?.speed)
+        setEnv(jsonObj.state, jsonObj?.attributes?.speed, jsonObj?.attributes?.oscillating)
     } catch (e) {
         log.error "Exception caught while parsing data: "+e;
     }
 }
 
-def updated() {}
+def updated() {
+	sendEvent(name: "fanOscillationMode", value: "fixed", displayed: false)
+}
 
 def sendCommand(options, _callback){
 	def myhubAction = new physicalgraph.device.HubAction(options, null, [callback: _callback])
