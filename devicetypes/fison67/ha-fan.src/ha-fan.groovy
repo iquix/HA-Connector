@@ -248,7 +248,7 @@ def callback(physicalgraph.device.HubResponse hubResponse){
     }
 }
 
-def updated() {
+def installed() {
 	sendEvent(name: "fanOscillationMode", value: "fixed", displayed: false)
 }
 
