@@ -1,5 +1,5 @@
 /**
- *  HA Fan (v.0.0.3-iquix patch for xiaomi_miio_fan custom_component)
+ *  HA Fan (v.0.0.4-iquix patch for xiaomi_miio_fan custom_component)
  *
  *  Authors
  *   - fison67@nate.com / iquix@naver.com
@@ -217,6 +217,7 @@ def setFanOscillationMode(mode) {
 	log.debug "setFanOscillationMode(${mode})"
 	if (mode != "horizontal" && mode != "fixed") {
 		sendEvent(name: "fanOscillationMode", value: device.currentValue("fanOscillationMode"), displayed: false)
+		return
 	}
 	def ha_mode = (mode == "horizontal") ? "true" : "false"
 	processCommand("oscillate", [ "entity_id": state.entity_id, "oscillating": ha_mode ])	
