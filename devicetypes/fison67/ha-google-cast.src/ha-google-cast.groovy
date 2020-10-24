@@ -1,5 +1,5 @@
 /**
- *  HA Google Cast (v.0.0.1)
+ *  HA Google Cast (v.0.0.2)
  *
  *  Authors
  *   - iquix@naver.com
@@ -33,7 +33,7 @@ metadata {
 	}
 
 	preferences {
-		input name: "tts_service", title:"TTS Service", description: "Select TTS service that you setup in Home Assistant" , type: "enum", options: ["google_translate_say", "google_cloud_say"], defaultValue: "google_translate_say"
+		input name: "tts_service", title:"TTS Service", description: "Select TTS service that you setup in Home Assistant" , type: "enum", options: ["google_translate_say", "google_cloud_say", "watson_tts_say"], defaultValue: "google_translate_say"
 	}
 }
 
