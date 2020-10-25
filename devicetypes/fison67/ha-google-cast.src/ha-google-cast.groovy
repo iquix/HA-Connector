@@ -1,5 +1,5 @@
 /**
- *  HA Google Cast (v.0.0.2)
+ *  HA Google Cast (v.0.0.3)
  *
  *  Authors
  *   - iquix@naver.com
@@ -68,7 +68,7 @@ private setEnv(playstate, volume_level, is_volume_muted, media_title, media_arti
 	if (media_title != null) {
 		trackData.title = media_title
 		trackData.artist = media_artist
-		sendEvent(name: "trackDescription", value: media_title + (media_artist ? " | ${media_artist}":""))
+		sendEvent(name: "trackDescription", value: (media_artist ? "${media_artist} - ":"") + media_title )
 	} else if (media_content_id != null) {
 		def fname = media_content_id.split("\\/")[-1]
 		trackData.title = fname
