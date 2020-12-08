@@ -29,6 +29,7 @@ metadata {
 		capability "Audio Mute"
 		capability "Audio Track Data"
 		capability "Speech Synthesis"
+		capability "Refresh"
 		command "playURI", ["string"]
 	}
 
@@ -46,12 +47,16 @@ def setHASetting(url, password, deviceId) {
 	state.app_url = url
 	state.app_pwd = password
 	state.entity_id = deviceId
-	state.hasSetStatusMap = false
+	state.hasSetStatusMap = true
 
 	sendEvent(name: "ha_url", value: state.app_url, displayed: false)
 }
 
 def setStatus(status) {
+	refresh()
+}
+
+def setStatusMap(Map obj) {
 	refresh()
 }
 
@@ -157,7 +162,7 @@ def playURI(u) {
 }
 
 def installed() {
-	state.hasSetStatusMap = false
+	state.hasSetStatusMap = true
 	sendEvent(name: "supportedPlaybackCommands", value: JsonOutput.toJson(["play","pause","stop"]), displayed: false)
 	refresh()
 }
