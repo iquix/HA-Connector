@@ -1,5 +1,5 @@
 /**
- *  HA Google Cast (v.0.0.3)
+ *  HA Google Cast (v.0.0.4)
  *
  *  Authors
  *   - iquix@naver.com
@@ -29,8 +29,9 @@ metadata {
 		capability "Audio Mute"
 		capability "Audio Track Data"
 		capability "Speech Synthesis"
+		capability "Audio Notification"
+		capability "Notification"		
 		capability "Refresh"
-		command "playURI", ["string"]
 	}
 
 	preferences {
@@ -114,6 +115,32 @@ def previousTrack() {
 def speak(String text) {
 	log.debug "speak(${text})"
 	processCommand(TTS, JsonOutput.toJson([ "entity_id": state.entity_id, "message":text]))
+}
+
+def playTrackAndResume(uri, level){
+	log.debug "playTrackAndResume(${uri}, ${level})"
+	playTrack(uri, level)
+}
+
+def playTrackAndRestore(uri, level){
+	log.debug "playTrackAndRestore(${uri}, ${level})"
+	playTrack(uri, level)
+}
+
+def playTrack(uri, level){
+	log.debug "playTrack(${uri}, ${level})"
+	setVolume(level)
+	playURI(uri)
+}
+
+def playTrack(uri){
+	log.debug "playTrack(${arg})"
+	playURI(uri)
+}
+
+def deviceNotification(notification) {
+	log.debug "deviceNotification(${notification})"
+	speak(notification)
 }
 
 def mute() {
