@@ -117,24 +117,19 @@ def speak(String text) {
 	processCommand(TTS, JsonOutput.toJson([ "entity_id": state.entity_id, "message":text]))
 }
 
-def playTrackAndResume(uri, level){
+def playTrackAndResume(uri, level = -1){
 	log.debug "playTrackAndResume(${uri}, ${level})"
 	playTrack(uri, level)
 }
 
-def playTrackAndRestore(uri, level){
+def playTrackAndRestore(uri, level = -1){
 	log.debug "playTrackAndRestore(${uri}, ${level})"
 	playTrack(uri, level)
 }
 
-def playTrack(uri, level){
+def playTrack(uri, level = -1){
 	log.debug "playTrack(${uri}, ${level})"
-	setVolume(level)
-	playURI(uri)
-}
-
-def playTrack(uri){
-	log.debug "playTrack(${arg})"
+	if (level != -1) setVolume(level)
 	playURI(uri)
 }
 
