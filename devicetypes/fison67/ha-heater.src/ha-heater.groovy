@@ -1,5 +1,5 @@
 /**
- *  HA Heater (v.0.0.9)
+ *  HA Heater (v.0.0.9-1)
  *
  *  Authors
  *   - fison67@nate.com
@@ -21,6 +21,7 @@ import groovy.json.JsonSlurper
 
 metadata {
 	definition (name: "HA Heater", namespace: "fison67", author: "fison67/iquix", ocfDeviceType: "oic.d.thermostat") { //, vid: "generic-radiator-thermostat") {
+		capability "Thermostat"
 		capability "Thermostat Mode"
 		capability "Thermostat Heating Setpoint"
 		capability "Temperature Measurement"        
