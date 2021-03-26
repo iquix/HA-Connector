@@ -1,10 +1,10 @@
 /**
- *  HA Heater (v.0.0.8)
+ *  HA Heater (v.0.0.10)
  *
  *  Authors
  *   - fison67@nate.com
  *   - iquix@naver.com
- *  Copyright 2019-2020
+ *  Copyright 2019-2021
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -20,9 +20,11 @@
 import groovy.json.JsonSlurper
 
 metadata {
-	definition (name: "HA Heater", namespace: "fison67", author: "fison67/iquix", vid: "generic-radiator-thermostat") {
-		capability "Thermostat"
-		capability "Temperature Measurement"
+	definition (name: "HA Heater", namespace: "fison67", author: "fison67/iquix", ocfDeviceType: "oic.d.thermostat", mnmn: "SmartThingsCommunity", vid: "793d252d-d129-3d97-b879-57c7a48c55de") {
+		capability "Thermostat Mode"
+		capability "Thermostat Heating Setpoint"
+		capability "Temperature Measurement"    
+		capability "Thermostat Operating State"
 		capability "Refresh"
 		capability "Actuator"
 		capability "Sensor"
@@ -44,7 +46,7 @@ metadata {
 			}
 			tileAttribute("device.lastCheckin", key: "SECONDARY_CONTROL") {
 				attributeState("default", label:'Last Update: ${currentValue}',icon: "st.Health & Wellness.health9")
-			}
+			}            
 		}
 		controlTile("temperatureControl", "device.heatingSetpoint", "slider", sliderType: "HEATING", range:"(5..40)", height: 2, width: 3) {
 			state "default", action:"setHeatingSetpoint", backgroundColor: "#E86D13"
@@ -118,7 +120,7 @@ def setEnv(String statusValue, setpointValue, currentTemperatureValue){
 	//sendEvent(name: "switch", value: (_value=="off")? "off" : "on", displayed: true)
 	sendEvent(name: "thermostatMode", value: _value, displayed: true)
 	sendEvent(name: "heatingSetpoint", value: setpointValue as int, unit: "C", displayed: true)
-	sendEvent(name: "coolingSetpoint", value: setpointValue as int, unit: "C")
+	//sendEvent(name: "coolingSetpoint", value: setpointValue as int, unit: "C")
 	sendEvent(name: "temperature", value: currentTemperatureValue as int, unit: "C", displayed: true)
 	sendEvent(name: "thermostatOperatingState", value: ((_value=="heat")&&(currentTemperatureValue<setpointValue))? "heating" : "idle", displayed: true)
 	sendEvent(name: "lastCheckin", value: new Date().format("yyyy-MM-dd HH:mm:ss", location.timeZone), displayed: false)
@@ -130,9 +132,9 @@ def setHeatingSetpoint(temperature){
 	processCommand("set_temperature", [ "entity_id": state.entity_id, "temperature": settemp ])
 }
 
-def setCoolingSetpoint(temperature){
-	setHeatingSetpoint(temperature)
-}
+//def setCoolingSetpoint(temperature){
+//	setHeatingSetpoint(temperature)
+//}
 
 def setThermostatMode(mode){
 	log.debug "setThermostatMode(${mode}) called"
