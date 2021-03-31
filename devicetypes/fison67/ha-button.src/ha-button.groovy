@@ -2,7 +2,7 @@
  *  HA Button (v.0.0.2)
  *
  *  Authors
- *   - fison67@nate.com
+ *   - fison67@nate.com / iquix@naver.com
  *  Copyright 2019
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -22,7 +22,7 @@ metadata {
 	definition (name: "HA Button", namespace: "fison67", author: "fison67") {
       	capability "Sensor"
         capability "Button"
-        capability "Refresh"		
+        //capability "Refresh"		
         
         attribute "lastCheckin", "Date"
          
@@ -57,9 +57,9 @@ metadata {
             state "default", label:""
         }
         
-        standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+        /*standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", label:"", action:"refresh", icon:"st.secondary.refresh"
-        }
+        }*/
         
         valueTile("ha_url", "device.ha_url", width: 3, height: 1) {
             state "val", label:'${currentValue}', defaultState: true
