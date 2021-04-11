@@ -1,5 +1,5 @@
 /**
- *  HA Google Cast (v.0.0.4)
+ *  HA Google Cast (v.0.0.5)
  *
  *  Authors
  *   - iquix@naver.com
@@ -130,7 +130,7 @@ def playTrackAndRestore(uri, level = -1){
 def playTrack(uri, level = -1){
 	log.debug "playTrack(${uri}, ${level})"
 	if (level != -1) setVolume(level)
-	playURI(uri)
+	playURI(uri.toString())
 }
 
 def deviceNotification(notification) {
