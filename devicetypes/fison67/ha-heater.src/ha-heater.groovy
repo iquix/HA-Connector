@@ -1,5 +1,5 @@
 /**
- *  HA Heater (v.0.0.11-1)
+ *  HA Heater (v.0.0.12)
  *
  *  Authors
  *   - fison67@nate.com
@@ -20,11 +20,11 @@
 import groovy.json.JsonSlurper
 
 metadata {
-	definition (name: "HA Heater", namespace: "fison67", author: "fison67/iquix", vid: "generic-radiator-thermostat") {
+	definition (name: "HA Heater", namespace: "fison67", author: "fison67/iquix", mnmn: "SmartThingsCommunity", vid: "94d9a579-a027-31d5-b534-9da3833b1ffa") {
 		capability "Thermostat"
 		capability "Thermostat Mode"
 		capability "Thermostat Heating Setpoint"
-		capability "Temperature Measurement"    
+		capability "Temperature Measurement"	
 		capability "Thermostat Operating State"
 		capability "Refresh"
 		capability "Actuator"
@@ -32,9 +32,6 @@ metadata {
 		attribute "lastCheckin", "Date"
 		command "setStatus"
 		command "setStatusMap"
-	}
-	
-	simulator {
 	}
 	
 	tiles {
@@ -47,7 +44,7 @@ metadata {
 			}
 			tileAttribute("device.lastCheckin", key: "SECONDARY_CONTROL") {
 				attributeState("default", label:'Last Update: ${currentValue}',icon: "st.Health & Wellness.health9")
-			}            
+			}			
 		}
 		controlTile("temperatureControl", "device.heatingSetpoint", "slider", sliderType: "HEATING", range:"(5..40)", height: 2, width: 3) {
 			state "default", action:"setHeatingSetpoint", backgroundColor: "#E86D13"
@@ -113,15 +110,10 @@ def setEnv(String statusValue, setpointValue, currentTemperatureValue){
 	if(state.entity_id == null || state.HAsupportedModes == null){
 		return
 	}
-	def _value = statusValue
-	if(state.supportedModes.count(statusValue)==0) { // for compatibility 
-		_value = "heat"
-		log.debug "Status[${state.entity_id}] HA thermostat mode ${statusValue} is not supported in ST. Mode value is replaced into ${_value} for compatibility"
-	}
+	def _value = mapSTMode(statusValue)
 	//sendEvent(name: "switch", value: (_value=="off")? "off" : "on", displayed: true)
 	sendEvent(name: "thermostatMode", value: _value, displayed: true)
 	sendEvent(name: "heatingSetpoint", value: setpointValue as int, unit: "C", displayed: true)
-	//sendEvent(name: "coolingSetpoint", value: setpointValue as int, unit: "C")
 	sendEvent(name: "temperature", value: currentTemperatureValue as int, unit: "C", displayed: true)
 	sendEvent(name: "thermostatOperatingState", value: ((_value=="heat")&&(currentTemperatureValue<setpointValue))? "heating" : "idle", displayed: true)
 	sendEvent(name: "lastCheckin", value: new Date().format("yyyy-MM-dd HH:mm:ss", location.timeZone), displayed: false)
@@ -133,13 +125,9 @@ def setHeatingSetpoint(temperature){
 	processCommand("set_temperature", [ "entity_id": state.entity_id, "temperature": settemp ])
 }
 
-//def setCoolingSetpoint(temperature){
-//	setHeatingSetpoint(temperature)
-//}
-
 def setThermostatMode(mode){
 	log.debug "setThermostatMode(${mode}) called"
-	def _mode = (state.HAsupportedModes.count("heat") == 0 && state.HAsupportedModes.count("on") > 0 && mode == "heat" ) ? "on" : mode	// for compatibility
+	def _mode = mapHAMode(mode)
 	if (state.HAversion!="old") {	// HA version >= 0.96
 		processCommand("set_hvac_mode", [ "entity_id": state.entity_id, "hvac_mode": _mode ])
 	} else {	// HA version < 0.96
@@ -203,10 +191,9 @@ def callbackRefresh(physicalgraph.device.HubResponse hubResponse){
 
 def callbackInitialize(physicalgraph.device.HubResponse hubResponse){
 	def msg, iState, iSetTemp, iCurTemp
-	def STsupportedModes = ["auto","cool","eco","rush hour","emergency heat","heat","off"]
+	def STsupportedModes = ["auto","cool","eco","rush hour","emergency heat", "energysaveheat", "fanonly", "heat", "off"]
 	def HAsupportedModes = []
 	def supportedModes = []
-	def supportedThermostatFanModes = []
 	try {
 		msg = parseLanMessage(hubResponse.description)
 		def jsonObj = new JsonSlurper().parseText(msg.body)
@@ -226,15 +213,15 @@ def callbackInitialize(physicalgraph.device.HubResponse hubResponse){
 		log.error "Initialize : Exception caught while parsing data: "+e;
 	}
 	for (m in HAsupportedModes) {
-		if(STsupportedModes.count(m) > 0) {
-			supportedModes << m
+		def m_map = mapSTMode(m)
+		if(STsupportedModes.count(m_map) > 0) {
+			supportedModes << m_map
 		}
 	}
 	state.HAsupportedModes = HAsupportedModes
 	state.supportedModes = supportedModes
 	setEnv(iState, iSetTemp, iCurTemp)
 	sendEvent(name: "supportedThermostatModes", value: supportedModes, displayed: false)
-	sendEvent(name: "supportedThermostatFanModes", value: supportedThermostatFanModes, displayed: false)
 }
 
 def updated() {
@@ -244,4 +231,33 @@ def updated() {
 def sendCommand(options, _callback){
 	def myhubAction = new physicalgraph.device.HubAction(options, null, [callback: _callback])
 	sendHubCommand(myhubAction)
+}
+
+def mapSTMode(ha_mode) {
+	def ret = null
+	Map mapping = ["on": "heat", "off": "off", "heat": "heat", "cool": "cool", "heat_cool": "auto", "auto": "auto", "dry": "dryair", "fan_only": "eco"]
+	try {
+		ret = mapping[ha_mode]
+	} catch(e) {
+	}
+	if (ret == null) {
+		ret = "heat"
+		log.debug "Status[${state.entity_id}] HA Climate mode ${ha_mode} is not supported in ST. Mode value is replaced into ${ret} for compatibility"
+	}
+	return ret
+}
+
+def mapHAMode(st_mode) {
+	def ret = null
+	Map mapping = ["off": "off", "heat": "heat", "cool": "cool", "auto": "auto", "dryair": "dry", "eco": "fan_only", "fanonly": "fan_only"]
+	try {
+		ret = mapping[st_mode]
+	} catch(e) {
+	}
+	if (ret == null) {
+		ret = "heat"
+		log.debug "Status[${state.entity_id}] Thermostat mode ${st_mode} is not supported in HA. Mode value is replaced into ${ret} for compatibility"
+	}
+	ret = (state.HAsupportedModes.count("heat") == 0 && state.HAsupportedModes.count("on") > 0 && ret == "heat" ) ? "on" : ret	// for compatibility
+	return ret
 }
