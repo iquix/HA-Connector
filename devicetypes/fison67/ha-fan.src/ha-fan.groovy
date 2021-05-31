@@ -1,5 +1,5 @@
 /**
- *  HA Fan (v.0.0.4-iquix patch for xiaomi_miio_fan custom_component)
+ *  HA Fan (v.0.0.5-iquix patch for xiaomi_miio_fan custom_component)
  *
  *  Authors
  *   - fison67@nate.com / iquix@naver.com
@@ -18,15 +18,16 @@
  
 
 import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
 
 metadata {
-	definition (name: "HA Fan", namespace: "fison67", author: "fison67/iquix", ocfDeviceType: "oic.d.fan") {
+	definition (name: "HA Fan", namespace: "fison67", author: "fison67/iquix", ocfDeviceType: "oic.d.fan", mnmn: "SmartThingsCommunity", vid: "d6fdeee3-3c62-325d-a31d-15609d1727f4") {
 		capability "Switch"						
 		capability "Fan Speed"
 		capability "Switch Level"
+		capability "Fan Oscillation Mode"
 		capability "Refresh"
 		capability "Actuator"
-		capability "Fan Oscillation Mode"
 
 		command "low"
 		command "medium"
@@ -251,6 +252,7 @@ def callback(physicalgraph.device.HubResponse hubResponse){
 
 def installed() {
 	sendEvent(name: "fanOscillationMode", value: "fixed", displayed: false)
+	sendEvent(name: "supportedFanOscillationModes", value: JsonOutput.toJson(["fixed", "horizontal"]), displayed: false)	
 }
 
 def sendCommand(options, _callback){
