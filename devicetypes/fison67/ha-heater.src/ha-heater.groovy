@@ -111,8 +111,10 @@ def setEnv(String statusValue, setpointValue, currentTemperatureValue){
 		return
 	}
 	def _value = mapSTMode(statusValue)
-	//sendEvent(name: "switch", value: (_value=="off")? "off" : "on", displayed: true)
-	sendEvent(name: "thermostatMode", value: _value, displayed: true)
+	if (_value) {
+		//sendEvent(name: "switch", value: (_value=="off")? "off" : "on", displayed: true)    
+		sendEvent(name: "thermostatMode", value: _value, displayed: true)
+    }
 	sendEvent(name: "heatingSetpoint", value: setpointValue as int, unit: "C", displayed: true)
 	sendEvent(name: "temperature", value: currentTemperatureValue as int, unit: "C", displayed: true)
 	sendEvent(name: "thermostatOperatingState", value: ((_value=="heat")&&(currentTemperatureValue<setpointValue))? "heating" : "idle", displayed: true)
@@ -128,10 +130,12 @@ def setHeatingSetpoint(temperature){
 def setThermostatMode(mode){
 	log.debug "setThermostatMode(${mode}) called"
 	def _mode = mapHAMode(mode)
-	if (state.HAversion!="old") {	// HA version >= 0.96
-		processCommand("set_hvac_mode", [ "entity_id": state.entity_id, "hvac_mode": _mode ])
-	} else {	// HA version < 0.96
-		processCommand("set_operation_mode", [ "entity_id": state.entity_id, "operation_mode": _mode ])
+    if (_mode) {
+        if (state.HAversion!="old") {	// HA version >= 0.96
+            processCommand("set_hvac_mode", [ "entity_id": state.entity_id, "hvac_mode": _mode ])
+        } else {	// HA version < 0.96
+            processCommand("set_operation_mode", [ "entity_id": state.entity_id, "operation_mode": _mode ])
+        }
 	}
 }
 
@@ -240,10 +244,6 @@ def mapSTMode(ha_mode) {
 		ret = mapping[ha_mode]
 	} catch(e) {
 	}
-	if (ret == null) {
-		ret = "heat"
-		log.debug "Status[${state.entity_id}] HA Climate mode ${ha_mode} is not supported in ST. Mode value is replaced into ${ret} for compatibility"
-	}
 	return ret
 }
 
@@ -253,10 +253,6 @@ def mapHAMode(st_mode) {
 	try {
 		ret = mapping[st_mode]
 	} catch(e) {
-	}
-	if (ret == null) {
-		ret = "heat"
-		log.debug "Status[${state.entity_id}] Thermostat mode ${st_mode} is not supported in HA. Mode value is replaced into ${ret} for compatibility"
 	}
 	ret = (state.HAsupportedModes.count("heat") == 0 && state.HAsupportedModes.count("on") > 0 && ret == "heat" ) ? "on" : ret	// for compatibility
 	return ret
