@@ -1,5 +1,5 @@
 /**
- *  HA Heater (v.0.0.12)
+ *  HA Heater (v.0.0.13)
  *
  *  Authors
  *   - fison67@nate.com
@@ -80,7 +80,7 @@ def setStatusMap(Map obj) {
 	def stat = obj["state"]
 	def attr = obj["attr"]
 	log.debug "setStatusMap[${state.entity_id}] >> ${stat}, ${attr}"
-	setEnv(stat, attr.temperature, attr.current_temperature)
+	setEnv(stat, attr.temperature, attr.current_temperature, attr?.hvac_action)
 }
 
 def setHASetting(url, password, deviceId){
@@ -106,18 +106,22 @@ def refresh(){
 	sendCommand(options, callbackRefresh)
 }
 
-def setEnv(String statusValue, setpointValue, currentTemperatureValue){
+def setEnv(String statusValue, setpointValue, currentTemperatureValue, hvacActionValue = null){
 	if(state.entity_id == null || state.HAsupportedModes == null){
 		return
 	}
 	def _value = mapSTMode(statusValue)
 	if (_value) {
-		//sendEvent(name: "switch", value: (_value=="off")? "off" : "on", displayed: true)    
+		//sendEvent(name: "switch", value: (_value=="off")? "off" : "on", displayed: true)	
 		sendEvent(name: "thermostatMode", value: _value, displayed: true)
-    }
+	}
 	sendEvent(name: "heatingSetpoint", value: setpointValue as int, unit: "C", displayed: true)
 	sendEvent(name: "temperature", value: currentTemperatureValue as int, unit: "C", displayed: true)
-	sendEvent(name: "thermostatOperatingState", value: ((_value=="heat")&&(currentTemperatureValue<setpointValue))? "heating" : "idle", displayed: true)
+	if (hvacActionValue) {
+		sendEvent(name: "thermostatOperatingState", value: (hvacActionValue=="off") ? "idle" : hvacActionValue, displayed: true)
+	} else {
+		sendEvent(name: "thermostatOperatingState", value: ((_value=="heat")&&(currentTemperatureValue<setpointValue))? "heating" : "idle", displayed: true)
+	}
 	sendEvent(name: "lastCheckin", value: new Date().format("yyyy-MM-dd HH:mm:ss", location.timeZone), displayed: false)
 }
 
@@ -130,12 +134,12 @@ def setHeatingSetpoint(temperature){
 def setThermostatMode(mode){
 	log.debug "setThermostatMode(${mode}) called"
 	def _mode = mapHAMode(mode)
-    if (_mode) {
-        if (state.HAversion!="old") {	// HA version >= 0.96
-            processCommand("set_hvac_mode", [ "entity_id": state.entity_id, "hvac_mode": _mode ])
-        } else {	// HA version < 0.96
-            processCommand("set_operation_mode", [ "entity_id": state.entity_id, "operation_mode": _mode ])
-        }
+	if (_mode) {
+		if (state.HAversion!="old") {	// HA version >= 0.96
+			processCommand("set_hvac_mode", [ "entity_id": state.entity_id, "hvac_mode": _mode ])
+		} else {	// HA version < 0.96
+			processCommand("set_operation_mode", [ "entity_id": state.entity_id, "operation_mode": _mode ])
+		}
 	}
 }
 
@@ -186,8 +190,8 @@ def callbackRefresh(physicalgraph.device.HubResponse hubResponse){
 	try {
 		msg = parseLanMessage(hubResponse.description)
 		def jsonObj = new JsonSlurper().parseText(msg.body)
-		log.debug "Refresh[${state.entity_id}] >> mode: ${jsonObj.state}, heatingSetpoint: ${jsonObj.attributes.temperature}, currentTemp: ${jsonObj.attributes.current_temperature}"
-		setEnv(jsonObj.state, jsonObj.attributes.temperature, jsonObj.attributes.current_temperature)
+		log.debug "Refresh[${state.entity_id}] >> mode: ${jsonObj.state}, heatingSetpoint: ${jsonObj.attributes.temperature}, currentTemp: ${jsonObj.attributes.current_temperature} hvacAction: ${jsonObj.attributes?.hvac_action}"
+		setEnv(jsonObj.state, jsonObj.attributes.temperature, jsonObj.attributes.current_temperature, jsonObj.attributes?.hvac_action)
 	} catch (e) {
 		log.error "Exception caught while parsing data: "+e;
 	}
@@ -213,6 +217,7 @@ def callbackInitialize(physicalgraph.device.HubResponse hubResponse){
 		iState = jsonObj.state
 		iSetTemp = jsonObj.attributes.temperature
 		iCurTemp = jsonObj.attributes.current_temperature
+		iHvacAction = jsonObj.attributes?.hvac_action
 	} catch (e) {
 		log.error "Initialize : Exception caught while parsing data: "+e;
 	}
@@ -224,7 +229,7 @@ def callbackInitialize(physicalgraph.device.HubResponse hubResponse){
 	}
 	state.HAsupportedModes = HAsupportedModes
 	state.supportedModes = supportedModes
-	setEnv(iState, iSetTemp, iCurTemp)
+	setEnv(iState, iSetTemp, iCurTemp, iHvacAction)
 	sendEvent(name: "supportedThermostatModes", value: supportedModes, displayed: false)
 }
 
