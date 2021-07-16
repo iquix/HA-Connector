@@ -1,5 +1,5 @@
 /**
- *  HA Heater (v.0.0.13)
+ *  HA Heater (v.0.0.14)
  *
  *  Authors
  *   - fison67@nate.com
@@ -115,8 +115,8 @@ def setEnv(String statusValue, setpointValue, currentTemperatureValue, hvacActio
 		//sendEvent(name: "switch", value: (_value=="off")? "off" : "on", displayed: true)	
 		sendEvent(name: "thermostatMode", value: _value, displayed: true)
 	}
-	sendEvent(name: "heatingSetpoint", value: setpointValue as int, unit: "C", displayed: true)
-	sendEvent(name: "temperature", value: currentTemperatureValue as int, unit: "C", displayed: true)
+	sendEvent(name: "heatingSetpoint", value: ((setpointValue*2+0.5) as int)/2, unit: "C", displayed: true)
+	sendEvent(name: "temperature", value: ((currentTemperatureValue*2+0.5) as int)/2, unit: "C", displayed: true)
 	if (hvacActionValue) {
 		sendEvent(name: "thermostatOperatingState", value: (hvacActionValue=="off") ? "idle" : hvacActionValue, displayed: true)
 	} else {
@@ -126,9 +126,7 @@ def setEnv(String statusValue, setpointValue, currentTemperatureValue, hvacActio
 }
 
 def setHeatingSetpoint(temperature){
-	def settemp = temperature as int 
-	settemp += (settemp != temperature && temperature > device.currentValue("heatingSetpoint")) ? 1 : 0
-	processCommand("set_temperature", [ "entity_id": state.entity_id, "temperature": settemp ])
+	processCommand("set_temperature", [ "entity_id": state.entity_id, "temperature": temperature ])
 }
 
 def setThermostatMode(mode){
